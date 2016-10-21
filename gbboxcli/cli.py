@@ -1,5 +1,3 @@
-# TODO: Handle exception
-
 import json
 import os
 
@@ -137,10 +135,32 @@ def report(service_id, exp_id, arm_id):
 
 
 def get_api():
-    return gbboxcli.api.API.get_http_api(
-        os.environ.get('GB_END_POINT'),
-        os.environ.get('GB_SECRET'),
-    )
+    # Try environment variables
+    end_point = os.environ.get('GB_END_POINT', None)
+    secret = os.environ.get('GB_SECRET', None)
+
+    # Try configuration file
+    if end_point is None or secret is None:
+        home = os.path.expanduser('~')
+        try:
+            with open(os.path.join(home, '.gbbox.json'), 'r') as f:
+                config = json.load(f)
+                end_point = end_point or str(config['GB_END_POINT'])
+                secret = secret or str(config['GB_SECRET'])
+        except FileNotFoundError:
+            pass
+        except json.decoder.JSONDecodeError as e:
+            raise ValueError('Invalid .gbbox.json file. %s' % str(e))
+        except KeyError as e:
+            raise ValueError('Key not found in .gbbox.json: %s' % str(e))
+
+    # Error
+    if end_point is None or secret is None:
+        message = 'Provide GB_END_POINT and GB_SECRET environment variable ' \
+                  'or create configuration file at ~/.gbbox.json'
+        raise ValueError(message)
+
+    return gbboxcli.api.API.get_http_api(end_point, secret)
 
 
 def print_res(res):
