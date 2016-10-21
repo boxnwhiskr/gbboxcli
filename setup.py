@@ -57,8 +57,10 @@ setup(
 
     extras_require={
         'dev': [],
-        'test': [],
+        'test': ['coverage', 'nose', ],
     },
+
+    test_suite='nose.collector',
 
     package_data={
         # 'sample': ['package_data.dat'],

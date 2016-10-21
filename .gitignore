@@ -1,3 +1,7 @@
-__pycache__
-.idea
+__pycache__/
+.idea/
+dist/
+gbboxcli.egg-info/
+
 .python-version
+.coverage
