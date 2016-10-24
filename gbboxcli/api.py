@@ -13,30 +13,34 @@ class API:
     def get_http_api(end_point, secret):
         return HttpAPI(end_point, secret)
 
-    # TODO: Make unregister_service()
+    def __init__(self, end_point, req, secret):
+        self._end_point = end_point
+        self._req = req
+        self._secret = secret
+
     def register_service(self, service_id):
         res = self._post(201, '/metadata/services', {'service_id': service_id})
-        return self.to_json(res)
+        return self._to_json(res)
 
     def unregister_service(self, service_id):
         res = self._delete(200, '/metadata/services/%s' % service_id)
-        return self.to_json(res)
+        return self._to_json(res)
 
     def list_services(self):
         res = self._get(200, '/metadata/services')
-        return self.to_json(res)
+        return self._to_json(res)
 
     def update_config(self, service_id, config):
         res = self._put(200, '/metadata/services/%s' % service_id, config)
-        return self.to_json(res)
+        return self._to_json(res)
 
     def get_config(self, service_id):
         res = self._get(200, '/metadata/services/%s' % service_id)
-        return self.to_json(res)
+        return self._to_json(res)
 
     def flushall(self):
         res = self._post(200, '/metadata/flushall', {})
-        return self.to_json(res)
+        return self._to_json(res)
 
     def route(self, service_id, exp_ids, tid, uid=None, forced_arm_ids=None):
         qs = {
@@ -49,153 +53,86 @@ class API:
             qs['forced_arm_ids'] = json.dumps(forced_arm_ids)
 
         res = self._get(200, '/routes/%s' % service_id, qs)
-        return self.to_json(res)
+        return self._to_json(res)
 
     def process_log(self, service_id, log):
         res = self._post(200, '/logs/%s' % service_id, log)
-        return self.to_json(res)
+        return self._to_json(res)
 
     def report_all_arm_perfs(self, service_id):
         res = self._get(200, '/reports/%s' % service_id)
-        return self.to_json(res)
+        return self._to_json(res)
 
     def report_arm_perfs(self, service_id, exp_id):
         res = self._get(200, '/reports/%s/%s' % (service_id, exp_id))
-        return self.to_json(res)
+        return self._to_json(res)
 
     def report_arm_perf(self, service_id, exp_id, arm_id):
         res = self._get(200,
                         '/reports/%s/%s/%s' % (service_id, exp_id, arm_id))
-        return self.to_json(res)
-
-    def to_json(self, res):
-        raise NotImplementedError
+        return self._to_json(res)
 
     def _get(self, expected_status, url, qs=None):
+        headers, full_url = self._build_req(url, qs)
+        res = self._req.get(full_url, headers=headers)
+        self._check_res(res, expected_status)
+        return res
+
+    def _put(self, expected_status, url, data, qs=None):
+        headers, full_url = self._build_req(url, qs)
+        res = self._req.put(full_url, data=json.dumps(data), headers=headers)
+        self._check_res(res, expected_status)
+        return res
+
+    def _post(self, expected_status, url, data, qs=None):
+        headers, full_url = self._build_req(url, qs)
+        res = self._req.post(full_url, data=json.dumps(data), headers=headers)
+        self._check_res(res, expected_status)
+        return res
+
+    def _delete(self, expected_status, url, qs=None):
+        headers, full_url = self._build_req(url, qs)
+        res = self._req.delete(full_url, headers=headers)
+        self._check_res(res, expected_status)
+        return res
+
+    def _build_req(self, url, qs):
+        headers = {
+            'content-type': 'application/json',
+            'gbbox-secret': self._secret,
+        }
+        if qs is not None:
+            url = url + '?' + parse.urlencode(qs)
+
+        return headers, url
+
+    def _to_json(self, res):
         raise NotImplementedError
 
-    def _post(self, expected_status, url, data):
-        raise NotImplementedError
-
-    def _delete(self, expected_status, url):
-        raise NotImplementedError
-
-    def _put(self, expected_status, url, data):
-        raise NotImplementedError
+    def _check_res(self, res, expected_status):
+        if res.status_code != expected_status:
+            error = self._to_json(res)
+            raise HttpRemoteError(
+                res.status_code,
+                error['error_type'],
+                error['message'],
+            )
 
 
 class HttpAPI(API):
     def __init__(self, end_point, secret):
-        self._end_point = end_point
-        self._secret = secret
+        super().__init__(end_point, requests, secret)
 
-    def _post(self, expected_status, url, data):
-        headers = {
-            'content-type': 'application/json',
-            'gbbox-secret': self._secret,
-        }
-        res = requests.post(self._end_point + url, data=json.dumps(data),
-                            headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def _put(self, expected_status, url, data):
-        headers = {
-            'content-type': 'application/json',
-            'gbbox-secret': self._secret,
-        }
-        res = requests.put(self._end_point + url, data=json.dumps(data),
-                           headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def _get(self, expected_status, url, qs=None):
-        headers = {
-            'gbbox-secret': self._secret,
-        }
-        if qs is not None:
-            url = url + '?' + parse.urlencode(qs)
-
-        res = requests.get(self._end_point + url, headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def _delete(self, expected_status, url):
-        headers = {
-            'content-type': 'applications/json',
-            'gbbox-secret': self._secret,
-        }
-        res = requests.delete(self._end_point + url, headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def to_json(self, res):
+    def _to_json(self, res):
         return json.loads(res.text)
-
-    def _check_res(self, res, expected_status):
-        if res.status_code != expected_status:
-            error = self.to_json(res)
-            raise HttpRemoteError(
-                res.status_code,
-                error['error_type'],
-                error['message'],
-            )
 
 
 class TestAPI(API):
     def __init__(self, flask_test_app, secret):
-        self._app = flask_test_app
-        self._secret = secret
+        super().__init__('', flask_test_app, secret)
 
-    def _post(self, expected_status, url, data):
-        headers = {
-            'content-type': 'application/json',
-            'gbbox-secret': self._secret,
-        }
-        res = self._app.post(url, data=json.dumps(data), headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def _put(self, expected_status, url, data):
-        headers = {
-            'content-type': 'application/json',
-            'gbbox-secret': self._secret,
-        }
-        res = self._app.put(url, data=json.dumps(data), headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def _get(self, expected_status, url, qs=None):
-        headers = {
-            'gbbox-secret': self._secret,
-        }
-        if qs is not None:
-            url = url + '?' + parse.urlencode(qs)
-
-        res = self._app.get(url, headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def _delete(self, expected_status, url):
-        headers = {
-            'content-type': 'application/json',
-            'gbbox-secret': self._secret,
-        }
-        res = self._app.delete(url, headers=headers)
-        self._check_res(res, expected_status)
-        return res
-
-    def to_json(self, res):
+    def _to_json(self, res):
         return json.loads(res.data.decode('utf-8'))
-
-    def _check_res(self, res, expected_status):
-        if res.status_code != expected_status:
-            error = self.to_json(res)
-            raise HttpRemoteError(
-                res.status_code,
-                error['error_type'],
-                error['message'],
-            )
 
 
 class HttpRemoteError(BaseException):
