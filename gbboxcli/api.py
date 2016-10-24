@@ -18,6 +18,10 @@ class API:
         res = self._post(201, '/metadata/services', {'service_id': service_id})
         return self.to_json(res)
 
+    def unregister_service(self, service_id):
+        res = self._delete(200, '/metadata/services/%s' % service_id)
+        return self.to_json(res)
+
     def list_services(self):
         res = self._get(200, '/metadata/services')
         return self.to_json(res)
@@ -73,6 +77,9 @@ class API:
     def _post(self, expected_status, url, data):
         raise NotImplementedError
 
+    def _delete(self, expected_status, url):
+        raise NotImplementedError
+
     def _put(self, expected_status, url, data):
         raise NotImplementedError
 
@@ -110,6 +117,15 @@ class HttpAPI(API):
             url = url + '?' + parse.urlencode(qs)
 
         res = requests.get(self._end_point + url, headers=headers)
+        self._check_res(res, expected_status)
+        return res
+
+    def _delete(self, expected_status, url):
+        headers = {
+            'content-type': 'applications/json',
+            'gbbox-secret': self._secret,
+        }
+        res = requests.delete(self._end_point + url, headers=headers)
         self._check_res(res, expected_status)
         return res
 
@@ -160,6 +176,15 @@ class TestAPI(API):
         self._check_res(res, expected_status)
         return res
 
+    def _delete(self, expected_status, url):
+        headers = {
+            'content-type': 'application/json',
+            'gbbox-secret': self._secret,
+        }
+        res = self._app.delete(url, headers=headers)
+        self._check_res(res, expected_status)
+        return res
+
     def to_json(self, res):
         return json.loads(res.data.decode('utf-8'))
 
@@ -197,5 +222,3 @@ class HttpRemoteError(BaseException):
             self._message,
             self._status_code
         )
-
-
