@@ -104,7 +104,7 @@ class API:
         if qs is not None:
             url = url + '?' + parse.urlencode(qs)
 
-        return headers, url
+        return headers, self._end_point + url
 
     def _to_json(self, res):
         raise NotImplementedError
