@@ -50,6 +50,14 @@ def meta_register(service_id):
     print_res(res)
 
 
+@meta.command(name='unregister')
+@click.option('--service-id', required=True)
+def meta_unregister(service_id):
+    api = get_api()
+    res = api.unregister_service(service_id)
+    print_res(res)
+
+
 @meta.command(name='list')
 def meta_list():
     api = get_api()
