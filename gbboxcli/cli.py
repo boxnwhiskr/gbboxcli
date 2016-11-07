@@ -151,21 +151,21 @@ def get_api():
     if end_point is None or secret is None:
         home = os.path.expanduser('~')
         try:
-            with open(os.path.join(home, '.gbbox.json'), 'r') as f:
+            with open(os.path.join(home, '.gbboxcli.json'), 'r') as f:
                 config = json.load(f)
                 end_point = end_point or str(config['GB_END_POINT'])
                 secret = secret or str(config['GB_SECRET'])
         except FileNotFoundError:
             pass
         except json.decoder.JSONDecodeError as e:
-            raise ValueError('Invalid .gbbox.json file. %s' % str(e))
+            raise ValueError('Invalid .gbboxcli.json file. %s' % str(e))
         except KeyError as e:
-            raise ValueError('Key not found in .gbbox.json: %s' % str(e))
+            raise ValueError('Key not found in .gbboxcli.json: %s' % str(e))
 
     # Error
     if end_point is None or secret is None:
         message = 'Provide GB_END_POINT and GB_SECRET environment variable ' \
-                  'or create configuration file at ~/.gbbox.json'
+                  'or create configuration file at ~/.gbboxcli.json'
         raise ValueError(message)
 
     return gbboxcli.api.API.get_http_api(end_point, secret)
