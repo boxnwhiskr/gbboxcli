@@ -1,5 +1,6 @@
 import json
 import os
+from getpass import getpass
 
 import click
 import requests
@@ -35,6 +36,26 @@ def main():
 @click.group()
 def cli():
     pass
+
+
+@cli.command(name='init')
+@click.option('--end-point', required=True)
+@click.option('--secret', required=False, default=None)
+def init(end_point, secret):
+    if secret is None:
+        secret = getpass('Enter secret: ')
+    config = {
+        'GB_END_POINT': end_point,
+        'SECRET': secret,
+    }
+    config_path = os.path.join(
+        os.path.expanduser('~'),
+        '.gbboxcli.json',
+    )
+
+    with open(config_path, 'w') as f:
+        json.dump(config, f)
+    print('Configuration file is created at: %s' % config_path)
 
 
 @cli.group()
