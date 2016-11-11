@@ -42,6 +42,10 @@ class API:
         res = self._post(200, '/metadata/flushall', {})
         return self._to_json(res)
 
+    def set_arm_perf(self, service_id, exp_id, arm_id, perf):
+        res = self._put(200, '/reports/%s/%s/%s' % (service_id, exp_id, arm_id), perf)
+        return self._to_json(res)
+
     def route(self, service_id, exp_ids, tid, uid=None, forced_arm_ids=None):
         qs = {
             'exp_ids': ','.join(exp_ids),
