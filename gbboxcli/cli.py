@@ -46,7 +46,7 @@ def init(end_point, secret):
         secret = getpass('Enter secret: ')
     config = {
         'GB_END_POINT': end_point,
-        'SECRET': secret,
+        'GB_SECRET': secret,
     }
     config_path = os.path.join(
         os.path.expanduser('~'),
