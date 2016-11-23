@@ -146,20 +146,24 @@ def collect(service_id, tid, uid, q):
 
 
 @cli.command(name='report')
-@click.option('--service-id', required=True)
+@click.option('--service-id')
 @click.option('--exp-id')
 @click.option('--arm-id')
 def report(service_id, exp_id, arm_id):
     api = get_api()
-    if exp_id is None and arm_id is not None:
-        raise click.BadOptionUsage('Specify exp-id option')
-
-    if arm_id is not None:
-        res = api.report_arm_perf(service_id, exp_id, arm_id)
-    elif exp_id is not None:
-        res = api.report_arm_perfs(service_id, exp_id)
+    if service_id is None:
+        res = api.report()
     else:
-        res = api.report_all_arm_perfs(service_id)
+        if exp_id is None and arm_id is not None:
+            raise click.BadOptionUsage('Specify exp-id option')
+
+        if arm_id is not None:
+            res = api.report_arm_perf(service_id, exp_id, arm_id)
+        elif exp_id is not None:
+            res = api.report_arm_perfs(service_id, exp_id)
+        else:
+            res = api.report_all_arm_perfs(service_id)
+
     print_res(res)
 
 

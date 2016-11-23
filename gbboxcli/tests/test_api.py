@@ -214,6 +214,26 @@ class APITest(unittest.TestCase):
             api.process_log('goog', self._expected_req_body)
         self.assertRemoteError(ctx.exception)
 
+    def test_report(self):
+        mock_req = self.build_get(200, self._expected_res_body)
+        api = self.build_api(mock_req)
+
+        res = api.report()
+
+        self.assertDictEqual(self._expected_res_body, res)
+        mock_req.get.assert_called_with(
+            '/reports',
+            headers=self._expected_headers,
+        )
+
+    def test_report_with_error(self):
+        mock_req = self.build_get(400, self._expected_error)
+        api = self.build_api(mock_req)
+
+        with self.assertRaises(HttpRemoteError) as ctx:
+            api.report()
+        self.assertRemoteError(ctx.exception)
+
     def test_report_all_arm_perfs(self):
         mock_req = self.build_get(200, self._expected_res_body)
         api = self.build_api(mock_req)

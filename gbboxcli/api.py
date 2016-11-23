@@ -63,6 +63,10 @@ class API:
         res = self._post(200, '/logs/%s' % service_id, log)
         return self._to_json(res)
 
+    def report(self):
+        res = self._get(200, '/reports')
+        return self._to_json(res)
+
     def report_all_arm_perfs(self, service_id):
         res = self._get(200, '/reports/%s' % service_id)
         return self._to_json(res)
