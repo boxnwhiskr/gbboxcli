@@ -63,9 +63,12 @@ class API:
         res = self._post(200, '/logs/%s' % service_id, log)
         return self._to_json(res)
 
-    def report(self):
+    def report(self, flat=False):
         res = self._get(200, '/reports')
-        return self._to_json(res)
+        if flat:
+            return self._flatten(self._to_json(res))
+        else:
+            return self._to_json(res)
 
     def report_all_arm_perfs(self, service_id):
         res = self._get(200, '/reports/%s' % service_id)
@@ -125,6 +128,21 @@ class API:
                 error['error_type'],
                 error['message'],
             )
+
+    @staticmethod
+    def _flatten(res):
+        results = []
+        for service_id, service in res.items():
+            for exp_id, exp in service.items():
+                for arm_id, perf in exp.items():
+                    result = {
+                        'service_id': service_id,
+                        'exp_id': exp_id,
+                        'arm_id': arm_id,
+                    }
+                    result.update(perf)
+                    results.append(result)
+        return results
 
 
 class HttpAPI(API):

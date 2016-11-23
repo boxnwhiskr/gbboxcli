@@ -153,9 +153,7 @@ def collect(service_id, tid, uid, q):
 def report(service_id, exp_id, arm_id, flat):
     api = get_api()
     if service_id is None:
-        res = api.report()
-        if flat:
-            res = _flatten(res)
+        res = api.report(flat)
     else:
         if exp_id is None and arm_id is not None:
             raise click.BadOptionUsage('Specify exp-id option')
@@ -168,21 +166,6 @@ def report(service_id, exp_id, arm_id, flat):
             res = api.report_all_arm_perfs(service_id)
 
     print_res(res)
-
-
-def _flatten(res):
-    results = []
-    for service_id, service in res.items():
-        for exp_id, exp in service.items():
-            for arm_id, perf in exp.items():
-                result = {
-                    'service_id': service_id,
-                    'exp_id': exp_id,
-                    'arm_id': arm_id,
-                }
-                result.update(perf)
-                results.append(result)
-    return results
 
 
 def get_api():
