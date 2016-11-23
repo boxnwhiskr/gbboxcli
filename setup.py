@@ -10,7 +10,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='gbboxcli',
-    version='0.2.8',
+    version='0.2.9',
     description='Command-line interface for gbbox',
     long_description=long_description,
     url='https://github.com/boxnwhiskr/gbboxcli',
